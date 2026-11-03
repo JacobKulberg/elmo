@@ -13,6 +13,7 @@ import { MCP_AUTHORIZE_ENDPOINT } from "@workspace/config/constants";
 import type { ClientConfig } from "@workspace/config/types";
 import { authClient } from "@workspace/lib/auth/client";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
@@ -199,6 +200,13 @@ export function EmailPasswordLogin({
 	const [loading, setLoading] = useState(false);
 	const source = isCloud ? "cloud-signin" : "self-hosted-signin";
 
+	const [lastMethod, setLastMethod] = useState<string | null>(null);
+	useEffect(() => {
+		if (isCloud) {
+			setLastMethod(authClient.getLastUsedLoginMethod());
+		}
+	}, [isCloud]);
+
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
@@ -245,15 +253,18 @@ export function EmailPasswordLogin({
 		>
 			{isCloud && (
 				<div className="space-y-4 w-full pb-4">
-					<Button
-						type="button"
-						variant="outline"
-						className="w-full"
-						onClick={() => authClient.signIn.social({ provider: "google", callbackURL: destination })}
-					>
-						<IconBrandGoogle className="size-4" />
-						Continue with Google
-					</Button>
+					<div className="relative">
+						<Button
+							type="button"
+							variant="outline"
+							className="w-full"
+							onClick={() => authClient.signIn.social({ provider: "google", callbackURL: destination })}
+						>
+							<IconBrandGoogle className="size-4" />
+							Continue with Google
+						</Button>
+						{lastMethod === "google" && <LastUsedBadge />}
+					</div>
 					<LegalConsentNotice action="continuing with Google" />
 					<div className="flex items-center gap-3">
 						<Separator className="flex-1" />
@@ -300,9 +311,12 @@ export function EmailPasswordLogin({
 						autoComplete="current-password"
 					/>
 				</div>
-				<Button type="submit" className="w-full" disabled={loading}>
-					{loading ? "Signing in..." : "Sign in"}
-				</Button>
+				<div className="relative">
+					<Button type="submit" className="w-full" disabled={loading}>
+						{loading ? "Signing in..." : "Sign in"}
+					</Button>
+					{lastMethod === "email" && <LastUsedBadge />}
+				</div>
 			</form>
 			{canRegister && (
 				<p className="text-sm text-muted-foreground pt-4">
@@ -338,5 +352,13 @@ function DemoCredentialsCallout() {
 				</dl>
 			</div>
 		</div>
+	);
+}
+
+function LastUsedBadge() {
+	return (
+		<Badge variant="secondary" className="pointer-events-none absolute -top-2 right-2">
+			Last used
+		</Badge>
 	);
 }

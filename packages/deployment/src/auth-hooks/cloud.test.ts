@@ -30,6 +30,11 @@ describe("getCloudAuthOptions", () => {
 		expect(plugins.map((plugin) => plugin.id)).toContain("stripe");
 	});
 
+	it("remembers the last login method", () => {
+		const plugins = getCloudAuthOptions().extraPlugins ?? [];
+		expect(plugins.map((plugin) => plugin.id)).toContain("last-login-method");
+	});
+
 	it("requires email verification and sends it on signup and unverified sign-in", () => {
 		const options = getCloudAuthOptions();
 		expect(options.requireEmailVerification).toBe(true);
